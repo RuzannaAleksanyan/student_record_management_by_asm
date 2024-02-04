@@ -103,9 +103,17 @@ menu_loop:
     ; Read user choice
     lea rdi, [choice_format]
     lea rsi, [choice]
-    jmp read_int
+    ; jmp read_int
+    call read_int
+    jmp l1
 l1:
     ; Process user choice
+    cmp dword [choice], 1
+    jl invalid_choice      ; Jump if less than 1 (invalid choice)
+    cmp dword [choice], 5
+    jg invalid_choice      ; Jump if greater than 5 (invalid choice)
+
+    ; If the choice is within the valid range, jump to the corresponding option
     cmp dword [choice], 1
     je add_student_option
     cmp dword [choice], 2
@@ -116,11 +124,6 @@ l1:
     je delete_record_option
     cmp dword [choice], 5
     je exit_program
-    
-    cmp dword [choice], 1
-    jl invalid_choice      ; Jump if less than 1 (invalid choice)
-    cmp dword [choice], 5
-    jg invalid_choice      ; Jump if greater than 5 (invalid choice)
 
     ; If the choice is within the valid range, jump back to the menu loop
     jmp menu_loop
@@ -128,7 +131,6 @@ l1:
 
 add_student_option:
     ; ete paymany chisht e
-    
     jmp menu_loop
 
 display_records_option:
@@ -152,27 +154,7 @@ invalid_choice:
 
     jmp menu_loop    
 
-read_int:
-    mov rax, 0          ; syscall number for sys_read
-    mov rdi, 0          ; file descriptor 0 (stdin)
-    mov rdx, 10         ; number of bytes to read
-    lea rsi, [choice]   ; pointer to the variable to store the read integer
-    syscall
 
-    ; Convert ASCII to integer
-    xor rcx, rcx
-
-convert_loop:
-    movzx rax, byte [choice + rcx]
-    cmp rax, 10     ; check for newline character
-    je l1
-    sub rax, '0'
-    imul rdx, rdx, 10
-    add rsi, rcx
-    add rsi, '0'
-    add rdx, rax
-    inc rcx
-    jmp convert_loop
 
 
 load_from_file:
@@ -220,12 +202,10 @@ error_handling_file_open:
 error_handling_memory_alloc:
     ; Handle memory allocation error (print an error
 
-
 error_handling_file_read:
     ; Handle file reading error (print an error message, free resources, etc.)
     ; Optionally, close the file if it was opened before
     jmp exit
-
 
 exit_program:
     lea rdi, [Academy]
@@ -243,8 +223,32 @@ exit_program:
     syscall
 
 exit:
-     ; Your exit code here
-     ret
+    ; Your exit code here
+    ret
+
+read_int:
+    mov rax, 0          ; syscall number for sys_read
+    mov rdi, 0          ; file descriptor 0 (stdin)
+    mov rdx, 10         ; number of bytes to read
+    lea rsi, [choice]   ; pointer to the variable to store the read integer
+    syscall
+
+    ; Convert ASCII to integer
+    xor rax, rax
+    xor rcx, rcx
+
+convert_loop:
+    movzx rdx, byte [rsi + rcx]
+    cmp rdx, 10     ; check for newline character
+    je convert_done
+    sub rdx, '0'
+    imul rax, rax, 10
+    add rax, rdx
+    inc rcx
+    jmp convert_loop
+
+convert_done:
+    ret
 
 write_in_file:
     ; Implementation
