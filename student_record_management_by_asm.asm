@@ -42,7 +42,7 @@ section .data
     menu_prompt db '1. Add a new student record', 10, '2. Display all records', 10, '3. Update a record', 10, '4. Delete a record', 10, '5. Exit', 10, 'Enter your choice: ', 0
 
     choice_format db "%d", 0
-    format db "%s", 0
+    format db "%d", 0
 
     invalid_choice_message db 'Invalid choice. Please try again.', 10, 0
 
@@ -53,13 +53,11 @@ section .bss
     new_student resb StudentSize  ; Allocate space for a new Student struct
 
 section .text
-    global _start
+    global  main
 
     extern printf                  ; External declaration for printf function
     extern scanf                   ; External declaration for scanf function
-
-
-_start:
+main:
     ; Initialize the Academy struct
     lea rdi, [Academy]
     mov qword [rdi + AcademyStudentsOffset], 0  ; Initialize student pointer to 0
@@ -103,25 +101,24 @@ menu_loop:
     ; Read user choice
     lea rdi, [choice_format]
     lea rsi, [choice]
-    ; jmp read_int
-    call read_int
-    jmp l1
-l1:
-    ; Process user choice
+    jmp read_int
+    ; call read_int
+
+l1:    ; Process user choice
     cmp dword [choice], 1
     jl invalid_choice      ; Jump if less than 1 (invalid choice)
     cmp dword [choice], 5
     jg invalid_choice      ; Jump if greater than 5 (invalid choice)
 
     ; If the choice is within the valid range, jump to the corresponding option
-    cmp dword [choice], 1
-    je add_student_option
-    cmp dword [choice], 2
-    je display_records_option
-    cmp dword [choice], 3
-    je update_record_option
-    cmp dword [choice], 4
-    je delete_record_option
+    ; cmp dword [choice], 1
+    ; je add_student_option
+    ; cmp dword [choice], 2
+    ; je display_records_option
+    ; cmp dword [choice], 3
+    ; je update_record_option
+    ; cmp dword [choice], 4
+    ; je delete_record_option
     cmp dword [choice], 5
     je exit_program
 
@@ -153,9 +150,6 @@ invalid_choice:
     syscall
 
     jmp menu_loop    
-
-
-
 
 load_from_file:
      ; Open the file
@@ -207,9 +201,15 @@ error_handling_file_read:
     ; Optionally, close the file if it was opened before
     jmp exit
 
-exit_program:
-    lea rdi, [Academy]
-    call write_in_file
+
+
+read_int:
+    mov rax, 0          ; syscall number for sys_read
+    mov rdi, format          ; file descriptor 0 (stdin)
+    ; mov rdx, 10         ; number of bytes to read
+    mov  rsi, choice   ; pointer to the variable to store the read integer
+    call scanf
+    jmp l1
 
     ; Display a goodbye message
     mov rax, 1
@@ -217,37 +217,20 @@ exit_program:
     lea rsi, goodbye_message     ; pointer to the string
     mov rdx, goodbye_message_len ; length of the string
     syscall
-
+ret
     mov eax, 60         ; syscall number for sys_exit
     xor edi, edi        ; exit code 0
     syscall
 
+exit_program:
+    ; lea rdi, [Academy]
+    ; call write_in_file
+    
+
+
 exit:
     ; Your exit code here
-    ret
-
-read_int:
-    mov rax, 0          ; syscall number for sys_read
-    mov rdi, 0          ; file descriptor 0 (stdin)
-    mov rdx, 10         ; number of bytes to read
-    lea rsi, [choice]   ; pointer to the variable to store the read integer
-    syscall
-
-    ; Convert ASCII to integer
-    xor rax, rax
-    xor rcx, rcx
-
-convert_loop:
-    movzx rdx, byte [rsi + rcx]
-    cmp rdx, 10     ; check for newline character
-    je convert_done
-    sub rdx, '0'
-    imul rax, rax, 10
-    add rax, rdx
-    inc rcx
-    jmp convert_loop
-
-convert_done:
+    mov rax, 0
     ret
 
 write_in_file:
