@@ -17,17 +17,17 @@ struct Academy {
     int size;
 };
 
-// int load_from_file(struct Academy* academy);
-// void write_in_file(struct Academy* academy);
+int load_from_file(struct Academy* academy);
+void write_in_file(struct Academy* academy);
 
-// void allocate_students(struct Academy* academy);
+void allocate_students(struct Academy* academy);
 
-// void add_student(struct Academy* academy, struct Student* student);
-// void read_records(struct Academy* academy);
-// void update_record(struct Academy* academy, struct Student* student);
-// void delete_record(struct Academy* academy, int delete_id);
+void add_student(struct Academy* academy, struct Student* student);
+void read_records(struct Academy* academy);
+void update_record(struct Academy* academy, struct Student* student);
+void delete_record(struct Academy* academy, int delete_id);
 
-// void student_record_management(struct Academy* academy);
+void student_record_management(struct Academy* academy);
 
 int main() {
     struct Academy academy;
@@ -60,24 +60,24 @@ void student_record_management(struct Academy* academy) {
 
         switch (choice) {
             case 1:
-        //         printf("Enter student information: \n");
-        //         printf("Name: ");
-        //         scanf("%s", new_student.name);
-        //         printf("Surname: ");
-        //         scanf("%s", new_student.surname);
-        //         printf("Age: ");
-        //         scanf("%d", &new_student.age);
-        //         printf("Grade: ");
-        //         scanf("%d", &new_student.grade);
-        //         new_student.id = ++id;
-        //         add_student(academy, &new_student);
+                printf("Enter student information: \n");
+                printf("Name: ");
+                scanf("%s", new_student.name);
+                printf("Surname: ");
+                scanf("%s", new_student.surname);
+                printf("Age: ");
+                scanf("%d", &new_student.age);
+                printf("Grade: ");
+                scanf("%d", &new_student.grade);
+                new_student.id = ++id;
+                add_student(academy, &new_student);
                 break;
             case 2:
-        //         read_records(academy);
+                read_records(academy);
                 break;
             case 3:
-        //         printf("Enter the ID of the record to update: ");
-        //         int target_id;
+                printf("Enter the ID of the record to update: ");
+                int target_id;
         //         scanf("%d", &target_id);
         //         printf("Enter new student information: \n");
         //         printf("Name: ");

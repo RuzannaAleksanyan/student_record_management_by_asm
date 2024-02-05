@@ -29,6 +29,8 @@ section .data
     num_students dd 0  ; Declare num_students variable
     choice dd 0        ; Declare choice variable
     ID dd 0            ; Declare id variable
+    target_id dd 0
+
 
     filename db 'your_filename.txt', 0  ; Replace 'your_filename.txt' with the actual file name or path
 
@@ -40,14 +42,31 @@ section .data
     records_loaded dd 0 ; Declare and initialize records_loaded variable
 
     menu_prompt db '1. Add a new student record', 10, '2. Display all records', 10, '3. Update a record', 10, '4. Delete a record', 10, '5. Exit', 10, 'Enter your choice: ', 0
+    menu_prompt_size equ $-menu_prompt
 
-    choice_format db "%d", 0
-    format db "%d", 0
+    format_int db "%d", 0
+    format_string db "%s", 0
 
     invalid_choice_message db 'Invalid choice. Please try again.', 10, 0
+    invalid_choice_message_size equ $-invalid_choice_message
 
     goodbye_message db 'Goodbye! Thank you for using the program.', 10, 0
     goodbye_message_len equ $ - goodbye_message
+
+    message_1 db 'Enter student information: ', 10, 'Name: ', 0
+    message_1_size equ $-message_1
+
+    message_2 db 'Surname: ', 0
+    message_2_size equ $-message_2
+
+    message_3 db 'Age: ', 0
+    message_3_size equ $-message_3
+
+    message_4 db 'Grade: ', 0
+    message_4_size equ $-message_4
+
+    message_5 db 'Enter the ID of the record to update: ', 0
+    message_5_size equ $-message_5
 
 section .bss
     new_student resb StudentSize  ; Allocate space for a new Student struct
@@ -57,6 +76,12 @@ section .text
 
     extern printf                  ; External declaration for printf function
     extern scanf                   ; External declaration for scanf function
+    
+    extern add_student
+    extern read_records
+
+
+
 main:
     ; Initialize the Academy struct
     lea rdi, [Academy]
@@ -95,14 +120,13 @@ menu_loop:
     mov rax, 1
     mov rdi, 1
     mov rsi, menu_prompt            ; pointer to the string   ; length (0xFFFFFFFF means print until null terminator)
-    mov rdx, 117   ; length of the string
+    mov rdx, menu_prompt_size   ; length of the string
     syscall
 
     ; Read user choice
-    lea rdi, [choice_format]
+    lea rdi, [format_int]
     lea rsi, [choice]
     jmp read_int
-    ; call read_int
 
 l1:    ; Process user choice
     cmp dword [choice], 1
@@ -111,12 +135,12 @@ l1:    ; Process user choice
     jg invalid_choice      ; Jump if greater than 5 (invalid choice)
 
     ; If the choice is within the valid range, jump to the corresponding option
-    ; cmp dword [choice], 1
-    ; je add_student_option
-    ; cmp dword [choice], 2
-    ; je display_records_option
-    ; cmp dword [choice], 3
-    ; je update_record_option
+    cmp dword [choice], 1
+    je add_student_option
+    cmp dword [choice], 2
+    je display_records_option
+    cmp dword [choice], 3
+    je update_record_option
     ; cmp dword [choice], 4
     ; je delete_record_option
     cmp dword [choice], 5
@@ -125,17 +149,154 @@ l1:    ; Process user choice
     ; If the choice is within the valid range, jump back to the menu loop
     jmp menu_loop
 
+; add_student_option:
+;     mov rax, 1
+;     mov rdi, 1
+;     mov rsi, message_1            ; pointer to the string   ; length (0xFFFFFFFF means print until null terminator)
+;     mov rdx, message_1_size   ; length of the string
+;     syscall
+
+;     ; Read and display student name
+;     mov rax, 0          ; syscall number for sys_read
+;     mov rdi, format_string         ; file descriptor 0 (stdin)
+;     lea rsi, [new_student + StudentNameOffset]  ; pointer to the buffer for student name
+;     mov rdx, 50         ; maximum number of characters to read (adjust as needed)
+;     call scanf
+
+;     mov rax, 1
+;     mov rdi, 1
+;     mov rsi, message_2            ; pointer to the string   ; length (0xFFFFFFFF means print until null terminator)
+;     mov rdx, message_2_size   ; length of the string
+;     syscall
+
+;     ; Read and display student surname
+;     mov rax, 0          ; syscall number for sys_read
+;     mov rdi, format_string         ; file descriptor 0 (stdin)
+;     lea rsi, [new_student + StudentSurnameOffset]  ; pointer to the buffer for student name
+;     mov rdx, 50         ; maximum number of characters to read (adjust as needed)
+;     call scanf
+
+;     mov rax, 1
+;     mov rdi, 1
+;     mov rsi, message_3            ; pointer to the string   ; length (0xFFFFFFFF means print until null terminator)
+;     mov rdx, message_3_size   ; length of the string
+;     syscall
+
+;     ; Example: Read and display age
+;     mov rax, 0
+;     mov rdi, format_int
+;     lea rsi, [new_student + StudentAgeOffset]
+;     call scanf
+
+;     mov rax, 1
+;     mov rdi, 1
+;     mov rsi, message_4            ; pointer to the string   ; length (0xFFFFFFFF means print until null terminator)
+;     mov rdx, message_4_size   ; length of the string
+;     syscall
+
+;     ; Example: Read and display grade
+;     mov rax, 0
+;     mov rdi, format_int
+;     lea rsi, [new_student + StudentGradeOffset]
+;     call scanf
+
+;     mov eax, [ID]
+;     inc eax
+;     mov dword [new_student + StudentIdOffset], eax
+;     mov dword [ID], eax
+    
+;     ; Call add_student function
+;     mov rdi, Academy
+;     mov rsi, new_student
+;     call add_student
+
+;     jmp menu_loop
 
 add_student_option:
-    ; ete paymany chisht e
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, message_1            ; pointer to the string
+    mov rdx, message_1_size        ; length of the string
+    syscall
+
+    ; Read and display student name
+    mov rax, 0
+    mov rdi, format_string
+    lea rsi, [new_student + StudentNameOffset]
+    mov rdx, 50
+    call scanf
+
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, message_2
+    mov rdx, message_2_size
+    syscall
+
+    ; Read and display student surname
+    mov rax, 0
+    mov rdi, format_string
+    lea rsi, [new_student + StudentSurnameOffset]
+    mov rdx, 50
+    call scanf
+
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, message_3
+    mov rdx, message_3_size
+    syscall
+
+    ; Read and display age
+    mov rax, 0
+    mov rdi, format_int
+    lea rsi, [new_student + StudentAgeOffset]
+    call scanf
+
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, message_4
+    mov rdx, message_4_size
+    syscall
+
+    ; Read and display grade
+    mov rax, 0
+    mov rdi, format_int
+    lea rsi, [new_student + StudentGradeOffset]
+    call scanf
+
+    ; Increment ID
+    mov eax, [ID]
+    inc eax
+    mov dword [new_student + StudentIdOffset], eax
+    mov dword [ID], eax
+    
+    ; Call add_student function
+    mov rdi, Academy
+    mov rsi, new_student
+    call add_student
+
     jmp menu_loop
 
+
 display_records_option:
-    ; ete paymany chisht e
+    ; lea rdi, [Academy]
+    ; call read_records
+
     jmp menu_loop
 
 update_record_option:
-    ; ete paymany chisht e
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, message_5            ; pointer to the string   ; length (0xFFFFFFFF means print until null terminator)
+    mov rdx, message_5_size   ; length of the string
+    syscall
+
+    ; Read and display student name
+    mov rax, 0          ; syscall number for sys_read
+    mov rdi, format_int        ; file descriptor 0 (stdin)
+    lea rsi, [target_id]  ; pointer to the buffer for student name
+    mov rdx, 50         ; maximum number of characters to read (adjust as needed)
+    call scanf
+    
     jmp menu_loop
 
 delete_record_option:
@@ -146,7 +307,7 @@ invalid_choice:
     mov rax, 1
     mov rdi, 1
     mov rsi, invalid_choice_message     ; pointer to the string
-    mov rdx, 32   ; length of the string
+    mov rdx, invalid_choice_message_size   ; length of the string
     syscall
 
     jmp menu_loop    
@@ -201,26 +362,12 @@ error_handling_file_read:
     ; Optionally, close the file if it was opened before
     jmp exit
 
-
-
 read_int:
     mov rax, 0          ; syscall number for sys_read
-    mov rdi, format          ; file descriptor 0 (stdin)
-    ; mov rdx, 10         ; number of bytes to read
+    mov rdi, format_int          ; file descriptor 0 (stdin)
     mov  rsi, choice   ; pointer to the variable to store the read integer
     call scanf
     jmp l1
-
-    ; Display a goodbye message
-    mov rax, 1
-    mov rdi, 1
-    lea rsi, goodbye_message     ; pointer to the string
-    mov rdx, goodbye_message_len ; length of the string
-    syscall
-ret
-    mov eax, 60         ; syscall number for sys_exit
-    xor edi, edi        ; exit code 0
-    syscall
 
 exit_program:
     ; lea rdi, [Academy]
@@ -229,7 +376,13 @@ exit_program:
 
 
 exit:
-    ; Your exit code here
+    ; ; Display a goodbye message
+    ; mov rax, 1
+    ; mov rdi, 1
+    ; lea rsi, goodbye_message     ; pointer to the string
+    ; mov rdx, goodbye_message_len ; length of the string
+    ; syscall
+    
     mov rax, 0
     ret
 
@@ -311,6 +464,7 @@ allocate_students:
     ; Set academy->size to 0
     mov dword [rdi + AcademySizeOffset], 0      ; Set size to 0
 
+    
     ret
 
 error_handling1:
@@ -362,5 +516,10 @@ parse_student:
 ; Function to add a student to the academy
 add_student:
     ; Input: rdi - Pointer to the Academy structure
+
+    ret
+
+
+read_records:
 
     ret
