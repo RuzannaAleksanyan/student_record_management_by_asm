@@ -70,46 +70,45 @@ void student_record_management(struct Academy* academy) {
                 printf("Grade: ");
                 scanf("%d", &new_student.grade);
                 new_student.id = ++id;
-                add_student(academy, &new_student);
+                // add_student(academy, &new_student);
                 break;
             case 2:
-                read_records(academy);
+                // read_records(academy);
                 break;
             case 3:
                 printf("Enter the ID of the record to update: ");
                 int target_id;
-        //         scanf("%d", &target_id);
-        //         printf("Enter new student information: \n");
-        //         printf("Name: ");
-        //         scanf("%s", new_student.name);
-        //         printf("Surname: ");
-        //         scanf("%s", new_student.surname);
-        //         printf("Age: ");
-        //         scanf("%d", &new_student.age);
-        //         printf("Grade: ");
-        //         scanf("%d", &new_student.grade);
-        //         new_student.id = target_id;
-        //         update_record(academy, &new_student);
+                scanf("%d", &target_id);
+                printf("Enter new student information: \n");
+                printf("Name: ");
+                scanf("%s", new_student.name);
+                printf("Surname: ");
+                scanf("%s", new_student.surname);
+                printf("Age: ");
+                scanf("%d", &new_student.age);
+                printf("Grade: ");
+                scanf("%d", &new_student.grade);
+                new_student.id = target_id;
+                // update_record(academy, &new_student);
                 break;
             case 4:
-        //         if(academy->size <= 0) {
-        //             // student chenq karox heracnel qani vor chka student
-        //             printf("");
-        //         } else {
-        //             printf("Enter the ID of the record to delete: ");
-        //             int delete_id;
+                if(academy->size <= 0) {
+                    printf("We cannot remove it because there is no student");
+                } else {
+                    printf("Enter the ID of the record to delete: ");
+                    int delete_id;
                     
-        //             do {
-        //                 printf("Enter the ID of the record to delete (0 to %d): ", academy->size - 1);
-        //                 scanf("%d", &delete_id);
+                    do {
+                        printf("Enter the ID of the record to delete (0 to %d): ", academy->size - 1);
+                        scanf("%d", &delete_id);
 
-        //                 if (delete_id < 0 || delete_id >= academy->size) {
-        //                     printf("Invalid ID. Please enter a value between 0 and %d.\n", academy->size - 1);
-        //                 }
-        //             } while (delete_id < 0 || delete_id >= academy->size);
+                        if (delete_id < 0 || delete_id >= academy->size) {
+                            printf("Invalid ID. Please enter a value between 0 and %d.\n", academy->size - 1);
+                        }
+                    } while (delete_id < 0 || delete_id >= academy->size);
                     
-        //             delete_record(academy, delete_id);
-        //         }
+                    delete_record(academy, delete_id);
+                }
                 
                 break;
             case 5:
@@ -119,7 +118,7 @@ void student_record_management(struct Academy* academy) {
         }
 
     } while (choice != 5);
-    // write_in_file(academy);
+    write_in_file(academy);
 }
 
 void allocate_students(struct Academy* academy) {
@@ -134,21 +133,20 @@ void allocate_students(struct Academy* academy) {
     academy->size = 0;
 }
 
-// void add_student(struct Academy* academy, struct Student* student) {
-//     if(academy->size == STUDENT_MAX_COUNT) {
-//         // chenq karox usanox avelacnel tex chunenalu patcharov
-//         printf("");
-//         return;
-//     }
+void add_student(struct Academy* academy, struct Student* student) {
+    if(academy->size == STUDENT_MAX_COUNT) {
+        printf("We cannot add a student due to lack of spaceշն");
+        return;
+    }
 
-//     academy->students[academy->size].id = student->id;
-//     strcpy(academy->students[academy->size].name, student->name);
-//     strcpy(academy->students[academy->size].surname, student->surname);
-//     academy->students[academy->size].age = student->age;
-//     academy->students[academy->size].grade = student->grade;
+    academy->students[academy->size].id = student->id;
+    strcpy(academy->students[academy->size].name, student->name);
+    strcpy(academy->students[academy->size].surname, student->surname);
+    academy->students[academy->size].age = student->age;
+    academy->students[academy->size].grade = student->grade;
 
-//     ++academy->size;
-// }
+    ++academy->size;
+}
 
 int load_from_file(struct Academy* academy) {
     FILE* file = fopen("student_data.txt", "r");
@@ -178,7 +176,6 @@ int load_from_file(struct Academy* academy) {
         } else if (read_count != EOF) {
             printf("Error reading data from file. Skipping invalid record.\n");
         }
-        // ++line_cont;
         line_cont = student.id;
     }
 

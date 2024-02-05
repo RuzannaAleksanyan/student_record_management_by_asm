@@ -30,6 +30,7 @@ section .data
     choice dd 0        ; Declare choice variable
     ID dd 0            ; Declare id variable
     target_id dd 0
+    delete_id dd 0
 
 
     filename db 'your_filename.txt', 0  ; Replace 'your_filename.txt' with the actual file name or path
@@ -68,6 +69,21 @@ section .data
     message_5 db 'Enter the ID of the record to update: ', 0
     message_5_size equ $-message_5
 
+    message_6 db 'Enter new student information: ', 10, 'Name: ', 0
+    message_6_size equ $-message_6
+    
+    message_7 db 'We cannot remove it because there is no student.', 10
+    message_7_size equ $-message_7
+
+    delete_prompt db 'Enter the ID of the record to delete: ', 0
+    delete_prompt_size equ $ - delete_prompt
+
+    invalid_id_message db 'Invalid ID. Please enter a value between 0 and %d.', 10, 0
+    invalid_id_message_size equ $ - invalid_id_message
+
+    no_space_message db 'We cannot add a student due to lack of space', 0
+    no_space_message_size equ $ - no_space_message
+
 section .bss
     new_student resb StudentSize  ; Allocate space for a new Student struct
 
@@ -76,10 +92,14 @@ section .text
 
     extern printf                  ; External declaration for printf function
     extern scanf                   ; External declaration for scanf function
-    
+    extern strcpy
+
     extern add_student
     extern read_records
 
+    extern allocate_students
+
+    extern load_from_file
 
 
 main:
@@ -141,111 +161,48 @@ l1:    ; Process user choice
     je display_records_option
     cmp dword [choice], 3
     je update_record_option
-    ; cmp dword [choice], 4
-    ; je delete_record_option
+    cmp dword [choice], 4
+    je delete_record_option
     cmp dword [choice], 5
-    je exit_program
+    je exit
 
     ; If the choice is within the valid range, jump back to the menu loop
     jmp menu_loop
 
-; add_student_option:
-;     mov rax, 1
-;     mov rdi, 1
-;     mov rsi, message_1            ; pointer to the string   ; length (0xFFFFFFFF means print until null terminator)
-;     mov rdx, message_1_size   ; length of the string
-;     syscall
-
-;     ; Read and display student name
-;     mov rax, 0          ; syscall number for sys_read
-;     mov rdi, format_string         ; file descriptor 0 (stdin)
-;     lea rsi, [new_student + StudentNameOffset]  ; pointer to the buffer for student name
-;     mov rdx, 50         ; maximum number of characters to read (adjust as needed)
-;     call scanf
-
-;     mov rax, 1
-;     mov rdi, 1
-;     mov rsi, message_2            ; pointer to the string   ; length (0xFFFFFFFF means print until null terminator)
-;     mov rdx, message_2_size   ; length of the string
-;     syscall
-
-;     ; Read and display student surname
-;     mov rax, 0          ; syscall number for sys_read
-;     mov rdi, format_string         ; file descriptor 0 (stdin)
-;     lea rsi, [new_student + StudentSurnameOffset]  ; pointer to the buffer for student name
-;     mov rdx, 50         ; maximum number of characters to read (adjust as needed)
-;     call scanf
-
-;     mov rax, 1
-;     mov rdi, 1
-;     mov rsi, message_3            ; pointer to the string   ; length (0xFFFFFFFF means print until null terminator)
-;     mov rdx, message_3_size   ; length of the string
-;     syscall
-
-;     ; Example: Read and display age
-;     mov rax, 0
-;     mov rdi, format_int
-;     lea rsi, [new_student + StudentAgeOffset]
-;     call scanf
-
-;     mov rax, 1
-;     mov rdi, 1
-;     mov rsi, message_4            ; pointer to the string   ; length (0xFFFFFFFF means print until null terminator)
-;     mov rdx, message_4_size   ; length of the string
-;     syscall
-
-;     ; Example: Read and display grade
-;     mov rax, 0
-;     mov rdi, format_int
-;     lea rsi, [new_student + StudentGradeOffset]
-;     call scanf
-
-;     mov eax, [ID]
-;     inc eax
-;     mov dword [new_student + StudentIdOffset], eax
-;     mov dword [ID], eax
-    
-;     ; Call add_student function
-;     mov rdi, Academy
-;     mov rsi, new_student
-;     call add_student
-
-;     jmp menu_loop
-
 add_student_option:
     mov rax, 1
     mov rdi, 1
-    mov rsi, message_1            ; pointer to the string
-    mov rdx, message_1_size        ; length of the string
+    mov rsi, message_1            ; pointer to the string   ; length (0xFFFFFFFF means print until null terminator)
+    mov rdx, message_1_size   ; length of the string
     syscall
 
     ; Read and display student name
-    mov rax, 0
-    mov rdi, format_string
-    lea rsi, [new_student + StudentNameOffset]
-    mov rdx, 50
+    mov rax, 0          ; syscall number for sys_read
+    mov rdi, format_string         ; file descriptor 0 (stdin)
+    lea rsi, [new_student + StudentNameOffset]  ; pointer to the buffer for student name
+    mov rdx, 50         ; maximum number of characters to read (adjust as needed)
     call scanf
 
     mov rax, 1
     mov rdi, 1
-    mov rsi, message_2
-    mov rdx, message_2_size
+    mov rsi, message_2            ; pointer to the string   ; length (0xFFFFFFFF means print until null terminator)
+    mov rdx, message_2_size   ; length of the string
     syscall
 
     ; Read and display student surname
-    mov rax, 0
-    mov rdi, format_string
-    lea rsi, [new_student + StudentSurnameOffset]
-    mov rdx, 50
+    mov rax, 0          ; syscall number for sys_read
+    mov rdi, format_string         ; file descriptor 0 (stdin)
+    lea rsi, [new_student + StudentSurnameOffset]  ; pointer to the buffer for student name
+    mov rdx, 50         ; maximum number of characters to read (adjust as needed)
     call scanf
 
     mov rax, 1
     mov rdi, 1
-    mov rsi, message_3
-    mov rdx, message_3_size
+    mov rsi, message_3            ; pointer to the string   ; length (0xFFFFFFFF means print until null terminator)
+    mov rdx, message_3_size   ; length of the string
     syscall
 
-    ; Read and display age
+    ; Example: Read and display age
     mov rax, 0
     mov rdi, format_int
     lea rsi, [new_student + StudentAgeOffset]
@@ -253,17 +210,16 @@ add_student_option:
 
     mov rax, 1
     mov rdi, 1
-    mov rsi, message_4
-    mov rdx, message_4_size
+    mov rsi, message_4            ; pointer to the string   ; length (0xFFFFFFFF means print until null terminator)
+    mov rdx, message_4_size   ; length of the string
     syscall
 
-    ; Read and display grade
+    ; Example: Read and display grade
     mov rax, 0
     mov rdi, format_int
     lea rsi, [new_student + StudentGradeOffset]
     call scanf
 
-    ; Increment ID
     mov eax, [ID]
     inc eax
     mov dword [new_student + StudentIdOffset], eax
@@ -272,13 +228,12 @@ add_student_option:
     ; Call add_student function
     mov rdi, Academy
     mov rsi, new_student
-    call add_student
+    ; call add_student
 
     jmp menu_loop
 
-
 display_records_option:
-    ; lea rdi, [Academy]
+    lea rdi, [Academy]
     ; call read_records
 
     jmp menu_loop
@@ -296,11 +251,118 @@ update_record_option:
     lea rsi, [target_id]  ; pointer to the buffer for student name
     mov rdx, 50         ; maximum number of characters to read (adjust as needed)
     call scanf
+
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, message_6            ; pointer to the string   ; length (0xFFFFFFFF means print until null terminator)
+    mov rdx, message_6_size   ; length of the string
+    syscall
+
+    ; Read and display student name
+    mov rax, 0          ; syscall number for sys_read
+    mov rdi, format_string         ; file descriptor 0 (stdin)
+    lea rsi, [new_student + StudentNameOffset]  ; pointer to the buffer for student name
+    mov rdx, 50         ; maximum number of characters to read (adjust as needed)
+    call scanf
+
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, message_2            ; pointer to the string   ; length (0xFFFFFFFF means print until null terminator)
+    mov rdx, message_2_size   ; length of the string
+    syscall
+
+    mov rax, 0          ; syscall number for sys_read
+    mov rdi, format_string         ; file descriptor 0 (stdin)
+    lea rsi, [new_student + StudentSurnameOffset]  ; pointer to the buffer for student name
+    mov rdx, 50         ; maximum number of characters to read (adjust as needed)
+    call scanf
+
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, message_3            ; pointer to the string   ; length (0xFFFFFFFF means print until null terminator)
+    mov rdx, message_3_size   ; length of the string
+    syscall
+
+    ; Example: Read and display age
+    mov rax, 0
+    mov rdi, format_int
+    lea rsi, [new_student + StudentAgeOffset]
+    call scanf
+
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, message_4            ; pointer to the string   ; length (0xFFFFFFFF means print until null terminator)
+    mov rdx, message_4_size   ; length of the string
+    syscall
+
+    ; Example: Read and display grade
+    mov rax, 0
+    mov rdi, format_int
+    lea rsi, [new_student + StudentGradeOffset]
+    call scanf
+
+    ; new_student.id = target_id;
+    mov eax, [target_id]
+    mov dword [new_student + StudentIdOffset], eax
+
+    ; Call update_record(academy, &new_student);
+    mov rdi, Academy
+    mov rsi, new_student
+    ; call update_record
     
     jmp menu_loop
 
 delete_record_option:
-    ; ete paymany chisht e
+    ; Check if academy->size <= 0
+    mov rdi, Academy            ; Pointer to Academy structure
+    mov eax, [rdi + AcademySizeOffset]  ; Load size field
+    cmp eax, 0                  ; Compare size with 0
+    jle size_less_than_or_equal_zero ; Jump if less than or equal to zero    
+
+    ; Print prompt for entering the ID of the record to delete
+    mov rax, 1                   ; syscall number for sys_write
+    mov rdi, 1                   ; file descriptor 1 (stdout)
+    lea rsi, [delete_prompt]     ; pointer to the string
+    mov rdx, delete_prompt_size  ; length of the string
+    syscall
+
+    ; Read the ID of the record to delete
+    mov rax, 0                   ; syscall number for sys_read
+    mov rdi, format_int          ; file descriptor 0 (stdin)
+    lea rsi, [delete_id]         ; pointer to the variable to store the read integer
+    call scanf
+
+    ; Validate the entered ID
+    mov ecx, [rdi + AcademySizeOffset] ; Load academy->size
+    cmp dword [delete_id], 0                  ; Check if delete_id < 0
+    jl invalid_id_prompt                ; Jump if less than 0
+    cmp [delete_id], ecx                ; Check if delete_id >= academy->size
+    jge invalid_id_prompt               ; Jump if greater than or equal to academy->size
+
+    ; call delete_record(academy, delete_id)  ; Call delete_record function
+    jmp end_delete_process              ; Jump to the end of the process
+
+invalid_id_prompt:
+    ; Print invalid ID message
+    mov rax, 1                   ; syscall number for sys_write
+    mov rdi, 1                   ; file descriptor 1 (stdout)
+    lea rsi, [invalid_id_message] ; pointer to the string
+    mov rdx, invalid_id_message_size ; length of the string
+    syscall
+
+    ; Repeat the process until a valid ID is entered
+    jmp size_less_than_or_equal_zero
+
+end_delete_process:
+    ; call delete_record
+
+size_less_than_or_equal_zero:
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, message_7            ; pointer to the string   ; length (0xFFFFFFFF means print until null terminator)
+    mov rdx, message_7_size   ; length of the string
+    syscall
+
     jmp menu_loop
 
 invalid_choice:
@@ -347,7 +409,7 @@ load_from_file:
      mov dword [rdi + AcademySizeOffset], 0
 
      ; Process file line by line
-
+     ret
 
 error_handling_file_open:
     ; Handle file opening error (print an error message, etc.)
@@ -369,20 +431,9 @@ read_int:
     call scanf
     jmp l1
 
-exit_program:
-    ; lea rdi, [Academy]
-    ; call write_in_file
-    
-
-
 exit:
-    ; ; Display a goodbye message
-    ; mov rax, 1
-    ; mov rdi, 1
-    ; lea rsi, goodbye_message     ; pointer to the string
-    ; mov rdx, goodbye_message_len ; length of the string
-    ; syscall
-    
+    lea rdi, [Academy]
+    ; call write_in_file
     mov rax, 0
     ret
 
@@ -464,7 +515,6 @@ allocate_students:
     ; Set academy->size to 0
     mov dword [rdi + AcademySizeOffset], 0      ; Set size to 0
 
-    
     ret
 
 error_handling1:
@@ -500,26 +550,93 @@ section .data
 
 ; Function to parse student record
 parse_student:
-    mov rax, [rsi] ; Assuming the first field is an integer (id)
+    mov eax, [rsi] ; Assuming the first field is an integer (id)
     mov [rsi + StudentIdOffset], eax
 
     lea rsi, [rsi + StudentNameOffset]
-
     lea rsi, [rsi + StudentSurnameOffset]
-
     lea rsi, [rsi + StudentAgeOffset]
-
     lea rsi, [rsi + StudentGradeOffset]
 
     ret
 
 ; Function to add a student to the academy
 add_student:
-    ; Input: rdi - Pointer to the Academy structure
+    mov eax, [rdi + AcademySizeOffset] ; Load size field
+    mov rbx, [rsi + StudentIdOffset]   ; Load student->id
 
+    ; Calculate the offset for the new student
+    mov r8, rax                          ; Copy academy->size to r8
+    imul r8, r8, StudentSize             ; Calculate offset by multiplying size with StudentSize
+    add r8, [rdi + AcademyStudentsOffset] ; Add the base address of academy->students
+    add r8, StudentIdOffset              ; Add the offset of StudentIdOffset
+
+    ; Set academy->students[academy->size].id = student->id
+    mov [r8], ebx
+
+    cmp eax, STUDENT_MAX_COUNT       ; Compare with STUDENT_MAX_COUNT
+    je no_space_available           ; Jump if equal
+
+    ; Increase academy->size
+    inc dword [rdi + AcademySizeOffset]
+
+    ; Assuming the student and academy structures are defined similarly as in your original code
+
+    ; Copy student->name to academy->students[academy->size].name
+    mov rsi, [rsi + StudentNameOffset]         ; Load student->name address
+    mov rdi, [rdi + AcademyStudentsOffset]     ; Load base address of academy->students
+    mov rdx, [rdi + AcademySizeOffset]         ; Load academy->size
+    mov rax, StudentSize                        ; Load size of Student structure
+    imul rdx, rdx, rax                         ; Calculate offset by multiplying size with StudentSize
+    add rdi, rdx                               ; Add the offset to the base address
+    mov rdx, 50                                ; Maximum number of characters to copy
+    call strcpy                                ; Call a strcpy-like function
+
+    ; Copy student->surname to academy->students[academy->size].surname
+    mov rsi, [rsi + StudentSurnameOffset]     ; Load student->surname address
+    mov rdi, [rdi + AcademyStudentsOffset]    ; Load base address of academy->students
+    mov rdx, [rdi + AcademySizeOffset]        ; Load academy->size
+    mov rax, StudentSize                       ; Load size of Student structure
+    imul rdx, rdx, rax                         ; Calculate offset by multiplying size with StudentSize
+    add rdi, rdx                               ; Add the offset to the base address
+    mov rdx, 50                                ; Maximum number of characters to copy
+    call strcpy                                ; Call a strcpy-like function
+
+    ; Copy student->age to academy->students[academy->size].age
+    mov rsi, [rsi + StudentAgeOffset]         ; Load student->age
+    mov rdi, [rdi + AcademyStudentsOffset]    ; Load base address of academy->students
+    mov rdx, [rdi + AcademySizeOffset]        ; Load academy->size
+    mov rax, StudentSize                       ; Load size of Student structure
+    ; imul rdx, rax, rdx                         ; Calculate offset by multiplying size with StudentSize
+    mul rdx, rax
+    add rdi, rdx                               ; Add the offset to the base address
+    mov [rdi + StudentAgeOffset], rsi         ; Copy student->age to academy->students[academy->size].age
+
+    ; Copy student->grade to academy->students[academy->size].grade
+    mov rsi, [rsi + StudentGradeOffset]       ; Load student->grade
+    mov rdi, [rdi + AcademyStudentsOffset]    ; Load base address of academy->students
+    mov rdx, [rdi + AcademySizeOffset]        ; Load academy->size
+    mov rax, StudentSize                       ; Load size of Student structure
+    imul rdx, rdx, rax                         ; Calculate offset by multiplying size with StudentSize
+    add rdi, rdx                               ; Add the offset to the base address
+    mov [rdi + StudentGradeOffset], rsi       ; Copy student->grade to academy->students[academy->size].grade
+
+    ; Increment academy->size
+    inc dword [rdi + AcademySizeOffset]        ; Increment academy->size
+
+    jmp l2
+
+no_space_available:
+    ; Print error message for lack of space
+    mov rax, 1                       ; syscall number for sys_write
+    mov rdi, 1                       ; file descriptor 1 (stdout)
+    lea rsi, [no_space_message]      ; pointer to the string
+    mov rdx, no_space_message_size   ; length of the string
+    syscall
+l2:    
     ret
 
 
 read_records:
-
+    
     ret
